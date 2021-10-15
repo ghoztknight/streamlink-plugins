@@ -1,9 +1,11 @@
 import json
 import re
 
-from streamlink.compat import urljoin, urlparse, urlunparse
+# from streamlink.compat import urljoin, urlparse, urlunparse
+from urllib.parse import urljoin, urlparse, urlunparse
 from streamlink.exceptions import PluginError, NoStreamsError
-from streamlink.plugin.api import validate, http, useragents
+from streamlink.plugin.api import validate, useragents
+from streamlink.plugin.api import HTTPSession
 from streamlink.plugin import Plugin
 from streamlink.stream import HLSStream
 from streamlink.utils import update_scheme
@@ -45,11 +47,11 @@ class bongacams(Plugin):
         country_code = CONST_DEFAULT_COUNTRY_CODE
 
         # create http session and set headers
-        http_session = http
+        http_session = HTTPSession()
         http_session.headers.update(CONST_HEADERS)
 
         # get cookies
-        r = http_session.get(urlunparse((stream_page_scheme, stream_page_domain, stream_page_path, '', '', '')))
+        r = http_session.request('get', urlunparse((stream_page_scheme, stream_page_domain, stream_page_path, '', '', '')))
 
         # redirect to profile page means stream is offline
         if '/profile/' in r.url:
@@ -79,7 +81,7 @@ class bongacams(Plugin):
         data = 'method=getRoomData&args%5B%5D={0}&args%5B%5D=false'.format(stream_page_path)
         self.logger.debug('DATA: {0}'.format(str(data)))
         # send request and close http-session
-        r = http_session.post(url=amf_gateway_url,
+        r = http_session.request('post', url=amf_gateway_url,
                               headers=headers,
                               params={CONST_AMF_GATEWAY_PARAM: country_code},
                               data=data)
